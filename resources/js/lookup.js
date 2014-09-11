@@ -1,15 +1,17 @@
 /**
- * Javascript functions to interact with muicBrainzQuery.php in an asynchronous manner. 
+ * Javascript functions to interact with muicBrainzQuery.php in an asynchronous manner.
  *
  * @author Neale Petrillo
- * @version 1.0.0
+ * @version 2.0.0
  */
-window.onload = initialize;
 
 /** Initialize Global Variables **/
 var request; 		//The XMLHTTP request
 var artistNode; 	//The list of currently returned artists
+var releaseNode; 	//The list of a selected artists releases
 
+/** Run Initialization Function **/
+window.onload = initialize;
 
 /**
  * Function called on page load to initialize variables.
@@ -18,11 +20,16 @@ var artistNode; 	//The list of currently returned artists
  */
 function initialize() {
 
+	//initialize the XMLHTTP request
    request = null;
    createRequest();
    
+   //find the result node
    artistNode = document.getElementById("artistResultsTable");
 
+   //bind search function to button
+   var searchButton=document.getElementById("searchButton");
+   searchButton.onclick = artistLookup('artistName', 0);
 }
 
 /**
@@ -32,17 +39,27 @@ function initialize() {
  */
 function artistLookup() {
 
-	//Initialize query parameters
 	var url = "musicBrainzQuery.php?";
 	var qury = null; 
 	
-	//Locate the search box
+	//select the serach box
 	var searchNode = document.getElementById("artistName");
-	qury = "artistName=" + escape(searchNode.value);
-
-	//Send query
+	
+	//build the query
+	if(requestType == "artistName") {
+		qury = "artistName=" + escape(searchNode.value);
+	}
+	else if(requestType == "artistID") {
+		qury = "artistID=" + id;
+	} 
+	else {
+		qury =  "releaseID=" +id; 
+	}
+	
 	request.open("GET", url + qury,true);
-	request.onreadystatechange = processArtists();
+	request.onreadystatechange = function(){
+			processArtists(requestType, id); 
+		}
 	request.send(null); 
 }
 
@@ -91,16 +108,15 @@ function requestLookup(releaseID){
  *
  * @version 1.0.0
  */
-function processArtists() {
+function processArtists(requstType, id) {
     
-	//Set status message
 	var messageNode = document.getElementById("messageText");
 	var returnText = new Array();
 	
-	//If the request has finished, process data
+	//If the requst has finished process data
 	if(request.readyState == 4) {
 		
-		//If there are results
+		//If there are restults
 		if(request.returnText != 'none'){
 			
 			//Get rid of searching message
@@ -111,32 +127,42 @@ function processArtists() {
 			for(i=0; i<returnText.length; i++) {
 				returnText[i] = returnText[i].split("\t");
 			}
-				//Remove results table
+		
+			//If we're processing an Artist List
+			if(requstType == "artistName") {
+				//remove results table
 				var rows = artistNode.rows;
 				while(rows.length) // length=0 -> stop 
        				 artistNode.deleteRow(rows.length-1);
 				
-				//Add current results
+				//add current results
 				for(i=0; i<returnText.length; i++){
 					var x = artistNode.insertRow(i);
-					x.id=returnText[i][0];
-					var y = x.insertCell(0);
-					y.innerHTML = "<a href =\"\" onclick=\"albumLookup(\'" + returnText[i][0] + "\');>" + returnText[i][1] + "</a>";
-					y = x.insertCell(1);
-					y.innerHTML = returnText[i][2]
+					
+					for(j=0; j<returnText[i].length; j++){
+						var y = x.insertCell(j);
+						y.innerHTML = returnText[i][j];
+					}
 				} 
+			}
+			else if(requestType == "artistID"){
+				
+			}
+			else if(requestType == "releaseID"){
+				
+			}
 		
 		}
 		//If there are no results
 		else {
-			//Set status message 
+			//Setup message node
 			messageNode.style.display = 'block';
 			messageNode.innerHTML = "No Results Found";
 			
 		}
 		
 	}
-	//If the request hasn't finished then display the searching message
+	//If the request hasn't finished then display the seraching message
 	else {
 		messageNode.style.display = 'block';
 		messageNode.innerHTML = "Searching...";
