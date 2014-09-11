@@ -37,7 +37,7 @@ function initialize() {
  *
  * @version 1.0.0
  */
-function artistLookup() {
+function artistLookup(requestType, id) {
 
 	var url = "musicBrainzQuery.php?";
 	var qury = null; 
@@ -302,6 +302,3 @@ function createRequest() {
 	}
 
 }
-
-// Empty function for no results
-function doNothing() {return false;}
